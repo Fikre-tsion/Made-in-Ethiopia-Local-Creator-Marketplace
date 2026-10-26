@@ -1,4 +1,4 @@
-
+import FeaturedCarousel from "@/components/FeaturedCarousel";
 import ProductCard from "../components/ProductCard";
 import products from "../data/products";
 
@@ -36,11 +36,7 @@ export default function Home() {
           </a>
         </div>
 
-        <div className="product-grid">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <FeaturedCarousel products={products} />
       </section>
 
       <section className="creator-banner">
