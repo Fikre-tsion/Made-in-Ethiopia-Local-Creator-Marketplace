@@ -1538,19 +1538,33 @@ a {
 
   .category-chip,
   .clear-filters {
-    padding: 9px 13px;
+    min-height: 44px;
+    padding: 8px 16px;
     border: 1px solid var(--border);
-    border-radius: 3px;
+    border-radius: 9999px;
     background: transparent;
     color: var(--muted);
     font: inherit;
     font-size: 13px;
     cursor: pointer;
+    transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  }
+
+  .category-chip:hover {
+    border-color: #9ca3af;
+    background: #f3f4f6;
+    color: var(--text);
+  }
+
+  .category-chip:focus-visible,
+  .clear-filters:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
   }
 
   .category-chip.is-selected {
-    border-color: var(--green);
-    background: var(--green);
+    border-color: #111827;
+    background: #111827;
     color: #fff;
   }
 
