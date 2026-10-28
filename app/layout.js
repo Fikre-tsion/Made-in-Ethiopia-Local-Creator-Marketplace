@@ -1,5 +1,8 @@
 
 import "./globals.css";
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
+import { CartProvider } from "../lib/cart/CartProvider";
 
 export const metadata = {
   title: "Made in Ethiopia",
@@ -9,7 +12,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <CartProvider>
+          <Navbar />
+          <div className="site-content">{children}</div>
+        </CartProvider>
+        <Footer />
+      </body>
     </html>
   );
 }
