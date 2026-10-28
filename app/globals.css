@@ -692,6 +692,10 @@ a {
   gap: 24px;
 }
 
+/* =========================
+   CREATORS PAGE
+========================= */
+
 .creators-page {
   min-height: 100vh;
   background: var(--cream);
@@ -726,6 +730,10 @@ a {
   line-height: 1.7;
 }
 
+/* =========================
+   CREATOR STATS
+========================= */
+
 .creator-stats {
   display: flex;
   flex-wrap: wrap;
@@ -748,34 +756,75 @@ a {
   font-size: 23px;
 }
 
+/* =========================
+   CREATORS CONTENT
+========================= */
+
 .creators-content {
   width: min(100% - 48px, 1120px);
   margin: 0 auto;
   padding: 38px 0 90px;
 }
 
+/* =========================
+   SEARCH AND FILTER
+========================= */
+
 .creator-filters {
   display: flex;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 14px;
+  width: 100%;
   margin-bottom: 24px;
 }
 
-.creator-filters .category-row {
+.creator-filters input[type="search"] {
+  flex: 1 1 0;
+  width: 100%;
+  min-width: 0;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 18px;
   margin: 0;
-}
-
-.creator-filters input {
-  width: min(100%, 300px);
-  min-height: 42px;
-  padding: 10px 14px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
+  border: 1px solid #ddd6c9;
+  border-radius: 10px;
   background: #fff;
   color: var(--text);
   font: inherit;
+  font-size: 15px;
+  box-sizing: border-box;
 }
+
+.creator-filters select {
+  flex: 0 0 240px;
+  width: 240px;
+  height: 52px;
+  min-height: 52px;
+  padding: 0 15px;
+  margin: 0;
+  border: 1px solid #ddd6c9;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+/* SEARCH AND FILTER FOCUS */
+
+.creator-filters input:focus,
+.creator-filters select:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+/* =========================
+   CREATOR DIRECTORY GRID
+========================= */
 
 .creator-directory-grid {
   display: grid;
@@ -795,6 +844,10 @@ a {
   box-shadow: var(--shadow-soft);
   transform: translateY(-3px);
 }
+
+/* =========================
+   CREATOR COVER
+========================= */
 
 .creator-cover {
   position: relative;
@@ -818,7 +871,10 @@ a {
 .creator-cover::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(transparent 35%, rgba(12, 24, 17, 0.65));
+  background: linear-gradient(
+    transparent 35%,
+    rgba(12, 24, 17, 0.65)
+  );
   content: "";
 }
 
@@ -845,6 +901,10 @@ a {
   bottom: 13px;
   font-size: 11px;
 }
+
+/* =========================
+   CREATOR CARD BODY
+========================= */
 
 .creator-directory-body {
   position: relative;
@@ -885,6 +945,10 @@ a {
   line-height: 1.65;
 }
 
+/* =========================
+   CREATOR CARD FOOTER
+========================= */
+
 .creator-directory-footer {
   display: flex;
   justify-content: space-between;
@@ -898,6 +962,10 @@ a {
 .creator-directory-footer > span {
   color: var(--muted);
 }
+
+/* =========================
+   EMPTY STATE
+========================= */
 
 .creator-empty {
   padding: 60px 24px;
@@ -916,21 +984,39 @@ a {
   color: var(--muted);
 }
 
+/* =========================
+   RESPONSIVE DESIGN
+========================= */
+
+/* TABLET */
 @media (max-width: 850px) {
   .creator-directory-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
+/* MOBILE */
+@media (max-width: 600px) {
   .creator-filters {
+    flex-direction: column;
     align-items: stretch;
-    flex-direction: column-reverse;
+    gap: 12px;
   }
 
-  .creator-filters input {
+  .creator-filters input[type="search"] {
+    flex: none;
     width: 100%;
+    height: 52px;
+  }
+
+  .creator-filters select {
+    flex: none;
+    width: 100%;
+    height: 52px;
   }
 }
 
+/* SMALL MOBILE */
 @media (max-width: 520px) {
   .creators-content {
     width: min(100% - 32px, 1120px);
