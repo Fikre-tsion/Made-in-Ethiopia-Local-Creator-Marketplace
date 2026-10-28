@@ -3,6 +3,9 @@ import shops from "../../../data/shops";
 import products from "../../../data/products";
 import ProductCard from "../../../components/ProductCard";
 import { notFound } from "next/navigation";
+import Link from "next/link";
+
+export const instant = false;
 
 export default async function ShopProfilePage({ params }) {
   const { id } = await params;
@@ -36,9 +39,9 @@ export default async function ShopProfilePage({ params }) {
             <p className="eyebrow">FROM THIS CREATOR</p>
             <h2>Products from this shop</h2>
           </div>
-          <a href="/marketplace" className="text-link">
+          <Link href="/marketplace" className="text-link">
             ← Back to shops
-          </a>
+          </Link>
         </div>
 
         {shopProducts.length > 0 ? (
@@ -52,7 +55,7 @@ export default async function ShopProfilePage({ params }) {
           </div>
         ) : (
           <p className="empty-state">
-            This shop hasn't listed any products yet.
+            This shop hasn&apos;t listed any products yet.
           </p>
         )}
       </section>

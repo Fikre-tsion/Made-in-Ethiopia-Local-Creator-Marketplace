@@ -1,6 +1,6 @@
 import FeaturedCarousel from "@/components/FeaturedCarousel";
-import ProductCard from "../components/ProductCard";
 import products from "../data/products";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -19,9 +19,9 @@ export default function Home() {
           and bring a piece of Ethiopian culture into your life.
         </p>
 
-        <a href="/marketplace" className="primary-button">
+        <Link href="/marketplace" className="primary-button">
           Explore Marketplace →
-        </a>
+        </Link>
       </section>
 
       <section className="featured-section">
@@ -31,9 +31,9 @@ export default function Home() {
             <h2>Featured creations</h2>
           </div>
 
-          <a href="/marketplace" className="text-link">
+          <Link href="/marketplace" className="text-link">
             View all products →
-          </a>
+          </Link>
         </div>
 
         <FeaturedCarousel products={products} />
@@ -49,9 +49,9 @@ export default function Home() {
           </p>
         </div>
 
-        <a href="/register" className="secondary-button">
+        <Link href="/register" className="secondary-button">
           Join Our Community →
-        </a>
+        </Link>
       </section>
     </main>
   );

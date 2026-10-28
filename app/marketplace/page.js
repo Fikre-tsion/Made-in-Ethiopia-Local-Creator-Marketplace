@@ -1,57 +1,43 @@
 
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import ShopCard from "../../components/ShopCard";
-import shops from "../../data/shops";
 import products from "../../data/products";
+import shops from "../../data/shops";
+import ProductCard from "../../components/ProductCard";
 
 function MarketplaceContent() {
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(() => searchParams.get("search") || "");
   const [category, setCategory] = useState("All");
-
-  useEffect(() => {
-    setSearch(searchParams.get("search") || "");
-  }, [searchParams]);
+  const [sort, setSort] = useState("featured");
+  const [favoritesOnly, setFavoritesOnly] = useState(searchParams.get("favorites") === "1");
 
   const categories = [
     "All",
-    ...new Set(shops.map((shop) => shop.category)),
+    ...new Set(products.map((product) => product.category)),
   ];
 
-  const filteredShops = shops.filter((shop) => {
+  const filteredProducts = products.filter((product) => {
     const searchText = search.toLowerCase();
-
-    const matchesShop =
-      shop.name.toLowerCase().includes(searchText) ||
-      shop.category.toLowerCase().includes(searchText) ||
-      shop.description.toLowerCase().includes(searchText);
-
-    const matchesProduct = products.some(
-      (product) =>
-        product.shopId === shop.id &&
-        product.name.toLowerCase().includes(searchText)
-    );
-
-    const matchesSearch =
-      searchText === "" || matchesShop || matchesProduct;
-
-    const matchesCategory =
-      category === "All" || shop.category === category;
-
-    return matchesSearch && matchesCategory;
+    const shop = shops.find((item) => item.id === product.shopId);
+    return (searchText === "" ||
+      product.name.toLowerCase().includes(searchText) ||
+      product.description.toLowerCase().includes(searchText) ||
+      shop?.name.toLowerCase().includes(searchText)) &&
+      (category === "All" || product.category === category) &&
+      (!favoritesOnly || (typeof window !== "undefined" && JSON.parse(window.localStorage.getItem("made-in-ethiopia-favorites") || "[]").includes(product.id)));
   });
+  const sortedProducts = [...filteredProducts].sort((a, b) => sort === "price-low" ? a.price - b.price : sort === "price-high" ? b.price - a.price : a.id - b.id);
 
   return (
     <main>
       <section className="marketplace-header">
         <p className="eyebrow">DISCOVER LOCAL CREATIVITY</p>
-        <h1>Discover Ethiopian Shops</h1>
+        <h1>Discover Ethiopian products</h1>
         <p>
-          Find local creators, explore their stories,
-          and discover products made in Ethiopia.
+          Explore handmade products from local creators and find something made in Ethiopia.
         </p>
       </section>
 
@@ -59,16 +45,16 @@ function MarketplaceContent() {
         <div className="marketplace-controls">
           <input
             type="search"
-            placeholder="Search products or shops..."
+            placeholder="Search products or creators..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            aria-label="Search products or shops"
+            aria-label="Search products or creators"
           />
 
           <select
             value={category}
             onChange={(event) => setCategory(event.target.value)}
-            aria-label="Filter shops by category"
+            aria-label="Filter products by category"
           >
             {categories.map((item) => (
               <option key={item} value={item}>
@@ -76,21 +62,31 @@ function MarketplaceContent() {
               </option>
             ))}
           </select>
+          <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products">
+            <option value="featured">Featured</option>
+            <option value="price-low">Price: low to high</option>
+            <option value="price-high">Price: high to low</option>
+          </select>
+        </div>
+        <div className="category-row" aria-label="Product categories">
+          {categories.map((item) => <button key={item} type="button" className={category === item ? "category-chip is-selected" : "category-chip"} onClick={() => setCategory(item)}>{item}</button>)}
+          <button type="button" className={favoritesOnly ? "category-chip is-selected" : "category-chip"} onClick={() => setFavoritesOnly((value) => !value)}>Favorites</button>
+          {(search || category !== "All" || sort !== "featured" || favoritesOnly) && <button type="button" className="clear-filters" onClick={() => { setSearch(""); setCategory("All"); setSort("featured"); setFavoritesOnly(false); }}>Clear filters</button>}
         </div>
 
         <p className="results-count">
-          {filteredShops.length} shops found
+          {sortedProducts.length} products found
         </p>
 
-        {filteredShops.length > 0 ? (
+        {sortedProducts.length > 0 ? (
           <div className="product-grid">
-            {filteredShops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+            {sortedProducts.map((product) => (
+              <ProductCard key={product.id} product={product} />
             ))}
           </div>
         ) : (
           <p className="empty-state">
-            No shops found. Try another search or category.
+            No products match those filters. Clear your search or choose another category.
           </p>
         )}
       </section>

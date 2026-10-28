@@ -17,7 +17,7 @@ export default function ShopCard({ shop }) {
               className="shop-image"
             />
           ) : (
-            <span>{shop.emoji || "🏪"}</span>
+            <span className="image-fallback">Creator</span>
           )}
         </div>
 
@@ -28,19 +28,14 @@ export default function ShopCard({ shop }) {
 
           <h3 className="shop-name">{shop.name}</h3>
 
-          <p className="shop-location">
-            <span aria-hidden="true">📍</span>{" "}
-            {shop.location}
-          </p>
+          <p className="shop-location">{shop.location}</p>
 
           <p className="shop-description">
             {shop.description}
           </p>
 
           <div className="shop-card-footer">
-            <span className="shop-made-in">
-              🇪🇹 Made in Ethiopia
-            </span>
+            <span className="shop-made-in">Made in Ethiopia</span>
 
             <span className="shop-arrow" aria-hidden="true">
               →

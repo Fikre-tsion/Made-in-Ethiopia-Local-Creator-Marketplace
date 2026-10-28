@@ -3,23 +3,17 @@
 import { useEffect, useRef, useState } from "react";
 import ProductCard from "./ProductCard";
 
-// Randomly shuffle products
 function shuffleProducts(items) {
-  const shuffled = [...items];
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  return shuffled;
+  return [...items].sort((a, b) => {
+    const score = (item) => ((Number(item.id) * 9301 + 49297) % 233280);
+    return score(a) - score(b);
+  });
 }
 
 export default function FeaturedCarousel({ products = [] }) {
   const total = products.length;
 
-  const [shuffledProducts, setShuffledProducts] = useState(products);
+  const [shuffledProducts] = useState(() => shuffleProducts(products));
   const [index, setIndex] = useState(total);
   const [visibleCount, setVisibleCount] = useState(3);
   const [paused, setPaused] = useState(false);
@@ -27,12 +21,6 @@ export default function FeaturedCarousel({ products = [] }) {
 
   const trackRef = useRef(null);
   const resettingRef = useRef(false);
-
-  // Shuffle products after initial render
-  useEffect(() => {
-    setShuffledProducts(shuffleProducts(products));
-    setIndex(products.length);
-  }, [products]);
 
   // Responsive carousel
   useEffect(() => {
