@@ -5,8 +5,6 @@ export default function Home() {
     <main className="welcome-page">
       <section className="welcome-hero">
         <div className="welcome-content">
-          <p className="eyebrow">SUPPORT • SHOP • CELEBRATE</p>
-
           <h1>
             Discover Ethiopia&apos;s
             <br />
@@ -17,10 +15,6 @@ export default function Home() {
             A marketplace connecting talented Ethiopian creators
             with people who appreciate locally made products.
           </p>
-
-          <h2 className="welcome-question">
-            How would you like to join us?
-          </h2>
 
           <div className="welcome-cards">
 
@@ -87,31 +81,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="welcome-benefits">
-        <div>
-          <span>🌿</span>
-          <h3>Support Local Talent</h3>
-          <p>Empower Ethiopian creators and their communities.</p>
-        </div>
-
-        <div>
-          <span>💎</span>
-          <h3>Authentic Products</h3>
-          <p>Discover unique, high-quality handmade items.</p>
-        </div>
-
-        <div>
-          <span>🤝</span>
-          <h3>Stronger Communities</h3>
-          <p>Help preserve Ethiopian culture and traditions.</p>
-        </div>
-
-        <div>
-          <span>❤️</span>
-          <h3>A Brighter Future</h3>
-          <p>Together, we create more opportunities for local creators.</p>
-        </div>
-      </section>
     </main>
   );
 }

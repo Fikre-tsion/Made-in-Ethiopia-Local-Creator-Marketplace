@@ -1,6 +1,4 @@
 import "./globals.css";
-import Footer from "../components/Footer";
-import Navbar from "../components/Navbar";
 import { CartProvider } from "../lib/cart/CartProvider";
 import SiteLayout from "../components/SiteLayout";
 
