@@ -1385,14 +1385,15 @@ button.cs-row-item:hover {
 .cs-delete-float {
   position: fixed;
   z-index: 60;
-  right: 28px;
-  bottom: 28px;
+  top: 50%;
+  left: 50%;
   width: min(430px, calc(100vw - 40px));
   padding: 18px 20px;
   border: 1px solid var(--cs-line);
   border-radius: 16px;
   background: #fff;
   box-shadow: 0 14px 36px rgba(20, 38, 29, 0.18);
+  transform: translate(-50%, -50%);
   animation: cs-float-in 0.22s ease-out;
 }
 
@@ -1445,11 +1446,19 @@ button.cs-row-item:hover {
 }
 
 .cs-btn-danger:hover {
-  background: #9c4c39;
+  border-color: #b8614c;
+  background: #b8614c;
+  box-shadow: 0 4px 10px rgba(177, 82, 61, 0.18);
+}
+
+.cs-delete-float .cs-btn-light:hover {
+  border-color: #d9cdbd;
+  background: #f7f1e7;
+  color: var(--cs-ink);
 }
 
 @keyframes cs-float-in {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)); }
 }
 
 @keyframes cs-toast-in {
@@ -1613,8 +1622,6 @@ button.cs-row-item:hover {
 
   @media (max-width: 560px) {
     .cs-delete-float {
-      right: 16px;
-      bottom: 16px;
       width: calc(100vw - 32px);
     }
   }
