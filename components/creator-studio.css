@@ -1439,22 +1439,25 @@ button.cs-row-item:hover {
   margin-top: 16px;
 }
 
-.cs-btn-danger {
+.cs-delete-float .cs-btn-danger {
   border-color: var(--cs-clay);
   background: var(--cs-clay);
   color: #fff;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.cs-btn-danger:hover {
-  border-color: #b8614c;
-  background: #b8614c;
+.cs-delete-float .cs-btn-danger:hover:not(:disabled) {
+  border-color: var(--cs-clay);
+  background: var(--cs-clay);
   box-shadow: 0 4px 10px rgba(177, 82, 61, 0.18);
+  transform: scale(1.06);
 }
 
-.cs-delete-float .cs-btn-light:hover {
+.cs-delete-float .cs-btn-light:hover:not(:disabled) {
   border-color: #d9cdbd;
   background: #f7f1e7;
   color: var(--cs-ink);
+  box-shadow: 0 3px 8px rgba(111, 80, 16, 0.08);
 }
 
 @keyframes cs-float-in {
