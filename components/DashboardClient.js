@@ -1464,25 +1464,25 @@ export default function DashboardClient({ user, profile }) {
       ) : null}
 
       {deleteTarget ? (
-        <div className="cs-dialog-backdrop" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setDeleteTarget(null);
-        }}>
-          <section className="cs-dialog" role="alertdialog" aria-modal="true" aria-labelledby="delete-product-title">
+        <section className="cs-delete-float" role="dialog" aria-labelledby="delete-product-title">
+          <div className="cs-delete-float-copy">
             <div className="cs-dialog-icon"><Icon name="trash" size={18} /></div>
-            <h2 id="delete-product-title">Delete this product?</h2>
-            <p>
-              “{deleteTarget.name}” will be permanently removed from your product list.
-            </p>
-            <div className="cs-dialog-actions">
-              <button type="button" className="cs-btn cs-btn-light" onClick={() => setDeleteTarget(null)}>
-                Keep product
-              </button>
-              <button type="button" className="cs-btn cs-btn-danger" onClick={() => deleteProduct(deleteTarget)}>
-                Delete product
-              </button>
+            <div>
+              <h2 id="delete-product-title">Delete product?</h2>
+              <p>
+                “{deleteTarget.name}” will be permanently removed.
+              </p>
             </div>
-          </section>
-        </div>
+          </div>
+          <div className="cs-dialog-actions">
+            <button type="button" className="cs-btn cs-btn-light" onClick={() => setDeleteTarget(null)}>
+              Cancel
+            </button>
+            <button type="button" className="cs-btn cs-btn-danger" onClick={() => deleteProduct(deleteTarget)}>
+              Delete
+            </button>
+          </div>
+        </section>
       ) : null}
     </div>
   );
