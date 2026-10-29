@@ -94,8 +94,8 @@ function RegisterContent() {
         );
         router.refresh();
       } else {
-        setMessage(
-          "Account created! Check your email to confirm your account, then sign in."
+        throw new Error(
+          "Email confirmation is still enabled in Supabase. Disable it to enter immediately after registration."
         );
       }
     } catch (error) {

@@ -178,6 +178,8 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_supabase_publishable_key
 
 The application also requires the appropriate Supabase database tables, authentication settings, and access policies.
 
+In Supabase, open **Authentication > Providers > Email** and turn off **Confirm email**. The registration form is configured to sign users in immediately and route them to the customer or creator area after account creation.
+
 **Important:** Never commit `.env.local` or private credentials to GitHub.
 
 ### 5. Start the Development Server
