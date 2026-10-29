@@ -59,12 +59,14 @@ export default function Home() {
           </p>
         </div>
 
-        <Link
-          href="/register?role=creator"
+        <a
+          href="https://t.me/Made_in_Ethiopia_Community"
           className="secondary-button"
+          target="_blank"
+          rel="noreferrer"
         >
           Join Our Community →
-        </Link>
+        </a>
       </section>
     </main>
   );

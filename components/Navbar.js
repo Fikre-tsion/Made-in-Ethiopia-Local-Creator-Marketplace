@@ -25,6 +25,11 @@ export default function Navbar() {
 
   const isCreatorDashboard = pathname.startsWith("/dashboard");
   const isCustomerDashboard = pathname.startsWith("/customer");
+  const isCreator = userRole === "creator";
+  const creatorLinks = [
+    { href: "/home", label: "Home" },
+    { href: "/shops", label: "View storefront" },
+  ];
 
   useEffect(() => {
     const supabase = createClient();
@@ -121,7 +126,7 @@ export default function Navbar() {
           className={`primary-navigation${menuOpen ? " is-open" : ""}`}
           aria-label="Primary navigation"
         >
-          {links.map((link) => (
+          {(isCreator ? creatorLinks : links).map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -134,14 +139,18 @@ export default function Navbar() {
             </Link>
           ))}
 
-          <Link
-            href="/marketplace?favorites=1"
-            onClick={closeMenu}
-          >
-            Favorites
-          </Link>
+          {!isCreator && (
+            <>
+              <Link
+                href="/marketplace?favorites=1"
+                onClick={closeMenu}
+              >
+                Favorites
+              </Link>
 
-          <CartButton />
+              <CartButton />
+            </>
+          )}
 
           {userRole === "customer" && (
             <Link
@@ -155,7 +164,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {userRole === "creator" && (
+          {isCreator && (
             <Link
               href="/dashboard"
               className={
