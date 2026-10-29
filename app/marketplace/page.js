@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import products from "../../data/products";
 import shops from "../../data/shops";
 import ProductCard from "../../components/ProductCard";
+import { createClient } from "../../lib/supabase/client";
 
 const FAVORITES_KEY = "made-in-ethiopia-favorites";
 
@@ -30,7 +31,9 @@ function MarketplaceContent() {
   const isFavoritesPage = searchParams.get("favorites") === "1";
 
   // STATES
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(
+    () => searchParams.get("search") || ""
+  );
   const [category, setCategory] = useState("All");
   const [priceRange, setPriceRange] = useState("All");
   const [sort, setSort] = useState("featured");
@@ -40,11 +43,41 @@ function MarketplaceContent() {
 
   const [filterType, setFilterType] = useState("");
   const [filterValue, setFilterValue] = useState("");
+  const [catalogProducts, setCatalogProducts] = useState(products);
 
-  // SYNC SEARCH WITH URL
   useEffect(() => {
-    setSearch(searchParams.get("search") || "");
-  }, [searchParams]);
+    let active = true;
+
+    async function loadPublishedProducts() {
+      const client = createClient();
+      const [{ data: rows, error }, { data: profiles }] = await Promise.all([
+        client.from("products").select("*").eq("status", "published"),
+        client.from("profiles").select("id,display_name").eq("role", "creator"),
+      ]);
+
+      if (!active) return;
+      if (error) {
+        console.error("Published products could not be loaded.", error);
+        return;
+      }
+
+      const profileNames = new Map(
+        (profiles || []).map((profile) => [profile.id, profile.display_name])
+      );
+      const published = (rows || []).map((row) => ({
+        ...row,
+        shopId: row.creator_id,
+        image: row.image_url || "",
+        shopName: profileNames.get(row.creator_id) || "Local creator",
+      }));
+      setCatalogProducts([...published, ...products]);
+    }
+
+    loadPublishedProducts();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // LOAD FAVORITES
   useEffect(() => {
@@ -82,20 +115,11 @@ function MarketplaceContent() {
     };
   }, []);
 
-  // RESET FILTERS WHEN SWITCHING PAGES
-  useEffect(() => {
-    setCategory("All");
-    setPriceRange("All");
-    setSort("featured");
-    setFilterType("");
-    setFilterValue("");
-  }, [isFavoritesPage]);
-
   // GET CATEGORIES
   const categories = [
     "All",
     ...new Set(
-      products.map((product) => product.category).filter(Boolean)
+      catalogProducts.map((product) => product.category).filter(Boolean)
     ),
   ];
 
@@ -111,7 +135,7 @@ function MarketplaceContent() {
   };
 
   // FILTER PRODUCTS
-  const filteredProducts = products.filter((product) => {
+  const filteredProducts = catalogProducts.filter((product) => {
     const searchText = search.trim().toLowerCase();
 
     const shop = shops.find(
