@@ -1,21 +1,29 @@
 "use client";
 
 import { useCart } from "../lib/cart/CartProvider";
-import { useState } from "react";
 
 export default function AddToCartButton({ product, className = "primary-button" }) {
-  const { addToCart } = useCart();
-  const [added, setAdded] = useState(false);
+  const { items, addToCart, removeFromCart } = useCart();
+  const inCart = items.some(
+    (item) => String(item.id) === String(product.id)
+  );
 
   function add() {
-    addToCart(product);
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 1600);
+    if (inCart) {
+      removeFromCart(product.id);
+    } else {
+      addToCart(product);
+    }
   }
 
   return (
-    <button type="button" className={className} onClick={add}>
-      {added ? "✓ Added to basket" : "Add to basket"}
+    <button
+      type="button"
+      className={`${className} cart-action${inCart ? " is-in-cart" : ""}`}
+      onClick={add}
+      aria-pressed={inCart}
+    >
+      {inCart ? "✓ In basket" : "Add to basket"}
     </button>
   );
 }
