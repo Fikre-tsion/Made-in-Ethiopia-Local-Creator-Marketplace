@@ -23,13 +23,17 @@ export default function ProductCard({
   product,
   showAddToCart = true,
 }) {
-  const { addToCart } = useCart();
+  const { items, addToCart, removeFromCart } = useCart();
 
   const [favorite, setFavorite] = useState(false);
-  const [added, setAdded] = useState(false);
 
-  const shop = shops.find(
-    (item) => item.id === product.shopId
+  const shop = shops.find((item) => item.id === product.shopId);
+  const productName =
+    product.name || product.title || product.product_name || "Untitled product";
+  const productDescription =
+    product.description || product.details || "Handcrafted by a local creator.";
+  const inCart = items.some(
+    (item) => String(item.id) === String(product.id)
   );
 
   // Check whether this product is already saved
@@ -64,13 +68,11 @@ export default function ProductCard({
 
   // ADD TO CART
   function handleAddToCart() {
-    addToCart(product);
-
-    setAdded(true);
-
-    window.setTimeout(() => {
-      setAdded(false);
-    }, 1600);
+    if (inCart) {
+      removeFromCart(product.id);
+    } else {
+      addToCart(product);
+    }
   }
 
   // ADD OR REMOVE FAVORITE
@@ -110,7 +112,7 @@ export default function ProductCard({
         <Link
           href={`/products/${product.id}`}
           className="product-card-link"
-          aria-label={`View ${product.name}`}
+          aria-label={`View ${productName}`}
         >
           <div
             className={`product-art ${product.color || "sand"}`}
@@ -118,7 +120,7 @@ export default function ProductCard({
             {product.image ? (
               <img
                 src={product.image}
-                alt={product.name}
+                alt={productName}
                 className="product-image"
               />
             ) : (
@@ -130,12 +132,12 @@ export default function ProductCard({
         {/* FAVORITE BUTTON */}
         <button
           type="button"
-          className="favorite-button"
+          className={`favorite-button${favorite ? " is-favorite" : ""}`}
           onClick={toggleFavorite}
           aria-label={
             favorite
-              ? `Remove ${product.name} from favorites`
-              : `Add ${product.name} to favorites`
+                  ? `Remove ${productName} from favorites`
+                  : `Add ${productName} to favorites`
           }
         >
           {favorite ? "♥" : "♡"}
@@ -145,18 +147,21 @@ export default function ProductCard({
       {/* PRODUCT INFORMATION */}
       <div className="product-info">
         <p className="product-category">
-          {product.category}
+          {product.category || "Handmade"}
         </p>
 
-        <h3>{product.name}</h3>
+        <Link href={`/products/${product.id}`} className="product-card-title">
+          <h3>{productName}</h3>
+          <p className="product-description">{productDescription}</p>
+        </Link>
 
         <p className="product-price">
           {Number(product.price).toLocaleString()} ETB
         </p>
 
-        {shop && (
+        {(shop || product.shopName) && (
           <p className="product-creator">
-            {shop.name}
+            {product.shopName || shop.name}
           </p>
         )}
 
@@ -164,16 +169,15 @@ export default function ProductCard({
         {showAddToCart && (
           <button
             type="button"
-            className="add-to-cart-button"
+            className={`add-to-cart-button${inCart ? " is-in-cart" : ""}`}
             onClick={handleAddToCart}
+            aria-pressed={inCart}
           >
             <span aria-hidden="true">
-              {added ? "✓" : "+"}
+              {inCart ? "✓" : "+"}
             </span>
 
-            {added
-              ? "Added to basket"
-              : "Add to basket"}
+            {inCart ? "In basket" : "Add to basket"}
           </button>
         )}
       </div>

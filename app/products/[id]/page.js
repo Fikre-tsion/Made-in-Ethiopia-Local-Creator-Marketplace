@@ -1,8 +1,8 @@
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import products from "../../../data/products";
 import AddToCartButton from "../../../components/AddToCartButton";
 import shops from "../../../data/shops";
+import ProductDetailsClient from "../../../components/ProductDetailsClient";
 
 export const instant = false;
 
@@ -11,9 +11,7 @@ export default async function ProductDetailsPage({ params }) {
   const product = products.find((item) => item.id === Number(id));
   const shop = product && shops.find((item) => item.id === product.shopId);
 
-  if (!product) {
-    notFound();
-  }
+  if (!product) return <ProductDetailsClient id={id} />;
 
   return (
     <main className="product-details-page">
