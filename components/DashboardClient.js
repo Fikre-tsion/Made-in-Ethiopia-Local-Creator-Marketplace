@@ -108,6 +108,7 @@ const money = (value) =>
   `ETB ${Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 
 function fromRow(row) {
+  if (!row) return null;
   return {
     id: row.id,
     name: row[FIELD.name] ?? "",
@@ -1264,12 +1265,17 @@ export default function DashboardClient({ user, profile }) {
 
     if (editingId) {
       const { data, error } = await db
-        .from("products")
-        .update(values)
-        .eq("id", editingId)
-        .eq(OWNER_COLUMN, user.id)
-        .select()
-        .single();
+      .from("products")
+      .update(values)
+      .eq("id", editingId)
+      .eq(OWNER_COLUMN, user.id)
+      .select();
+
+    console.log("Editing ID:", editingId);
+    console.log("User ID:", user.id);
+    console.log("Owner column:", OWNER_COLUMN);
+    console.log("Updated products:", data);
+    console.log("Supabase error:", error);
       if (error) throw new Error(error.message);
       setProducts((list) => list.map((p) => (p.id === editingId ? fromRow(data) : p)));
       notify("Changes saved.");
