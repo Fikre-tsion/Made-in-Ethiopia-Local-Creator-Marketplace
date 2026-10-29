@@ -2,6 +2,10 @@
     "chat.tools.terminal.autoApprove": {
         "printf": true,
         "git add": true,
-        "git commit": true
+        "git commit": true,
+        "/^find \\. -maxdepth 3 -type f \\\\\\( -name 'config\\.toml' -o -name 'supabase' \\\\\\) -print; command -v supabase \\|\\| true$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
