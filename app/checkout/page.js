@@ -1,9 +1,11 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "../../lib/cart/CartProvider";
 import Link from "next/link";
+
+const DEMO_CODE = "123456";
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
@@ -13,11 +15,34 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "Addis Ababa",
-    telebirrPhone: "",
   });
 
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [step, setStep] = useState("details");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [error, setError] = useState("");
   const [transactionRef, setTransactionRef] = useState("");
+  const [orderTotal, setOrderTotal] = useState(0);
+  const [orderDetails, setOrderDetails] = useState([]);
+
+  // Reset the checkout when a new cart is started after a successful order.
+  useEffect(() => {
+    if (items.length > 0 && step === "success") {
+      setStep("details");
+      setPaymentMethod("");
+      setVerificationCode("");
+      setError("");
+      setTransactionRef("");
+      setOrderTotal(0);
+      setOrderDetails([]);
+      setForm({
+        name: "",
+        phone: "",
+        address: "",
+        city: "Addis Ababa",
+      });
+    }
+  }, [items, step]);
 
   function handleChange(e) {
     setForm({
@@ -30,77 +55,114 @@ export default function CheckoutPage() {
     return /^(?:\+251|251|0)9\d{8}$/.test(phone.trim());
   }
 
-  function handleSubmit(e) {
+  function handleContinue(e) {
     e.preventDefault();
 
     if (!isValidEthiopianPhone(form.phone)) {
-      alert("Please enter a valid Ethiopian delivery phone number.");
+      setError("Please enter a valid Ethiopian phone number.");
       return;
     }
 
-    if (!isValidEthiopianPhone(form.telebirrPhone)) {
-      alert("Please enter a valid Telebirr phone number.");
+    if (!paymentMethod) {
+      setError("Please select a payment method.");
       return;
     }
 
-    // Generate a demo transaction reference
+    setError("");
+    setStep("verification");
+  }
+
+  function handleVerifyPayment(e) {
+    e.preventDefault();
+
+    if (verificationCode !== DEMO_CODE) {
+      setError("Incorrect verification code. Please try again.");
+      return;
+    }
+
     const reference =
-      "MIE-TB-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+      "MIE-" +
+      Math.random().toString(36).substring(2, 10).toUpperCase();
 
     setTransactionRef(reference);
-    setOrderPlaced(true);
+    setOrderTotal(total);
+    setOrderDetails([...items]);
+    setStep("success");
     clearCart();
   }
 
-  if (orderPlaced) {
+  if (items.length === 0 && step !== "success") {
+    return (
+      <main style={styles.container}>
+        <h1>Your cart is empty</h1>
+        <Link href="/marketplace" style={styles.button}>
+          Explore Marketplace
+        </Link>
+      </main>
+    );
+  }
+
+  if (step === "success") {
     return (
       <main style={styles.container}>
         <div style={styles.success}>
           <div style={styles.successIcon}>✓</div>
 
-          <h1>Payment Successful!</h1>
+          <h1>Payment Confirmed!</h1>
 
-          <p>
-            Thank you for shopping with Made in Ethiopia.
-          </p>
+          <p>Thank you for shopping with Made in Ethiopia.</p>
 
-          <p>
-            Your demo Telebirr payment has been completed successfully.
-          </p>
+          <p>Your order has been successfully confirmed.</p>
 
           <div style={styles.receipt}>
             <h3>Payment Receipt</h3>
 
+            {orderDetails.map((item) => (
+              <div key={item.id} style={styles.row}>
+                <span>
+                  {item.name} × {item.quantity}
+                </span>
+                <strong>
+                  {(
+                    Number(item.price) * item.quantity
+                  ).toLocaleString()} ETB
+                </strong>
+              </div>
+            ))}
+
+            <hr />
+
             <div style={styles.row}>
               <span>Payment Method</span>
-              <strong>Telebirr</strong>
+              <strong>{paymentMethod}</strong>
             </div>
 
             <div style={styles.row}>
-              <span>Amount Paid</span>
-              <strong>{total.toLocaleString()} ETB</strong>
+              <span>Amount</span>
+              <strong>{orderTotal.toLocaleString()} ETB</strong>
             </div>
 
             <div style={styles.row}>
               <span>Phone Number</span>
-              <strong>{form.telebirrPhone}</strong>
+              <strong>{form.phone}</strong>
             </div>
 
             <div style={styles.row}>
-              <span>Transaction Reference</span>
+              <span>Order Reference</span>
               <strong>{transactionRef}</strong>
             </div>
 
             <div style={styles.row}>
               <span>Status</span>
               <strong style={{ color: "#245c43" }}>
-                Demo Successful
+                Confirmed
               </strong>
             </div>
           </div>
 
           <p style={styles.note}>
-            This was a simulated payment. No real money was transferred.
+            Demo payment verification completed successfully.
+            No real money was transferred.
           </p>
 
           <Link href="/marketplace" style={styles.button}>
@@ -111,14 +173,92 @@ export default function CheckoutPage() {
     );
   }
 
-  if (items.length === 0) {
+  if (step === "verification") {
     return (
       <main style={styles.container}>
-        <h1>Your cart is empty</h1>
+        <div style={styles.verificationCard}>
+          <div style={styles.telebirrLogo}>
+            {paymentMethod === "Telebirr" ? "T" : "C"}
+          </div>
 
-        <Link href="/marketplace" style={styles.button}>
-          Explore Marketplace
-        </Link>
+          <p style={styles.eyebrow}>PAYMENT VERIFICATION</p>
+
+          <h1 style={styles.verificationTitle}>
+            Verify Your Payment
+          </h1>
+
+          <p style={styles.verificationText}>
+            Enter the six-digit verification code to confirm
+            your {paymentMethod} payment.
+          </p>
+
+          <div style={styles.paymentDetails}>
+            <div style={styles.row}>
+              <span>Payment Method</span>
+              <strong>{paymentMethod}</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Phone Number</span>
+              <strong>{form.phone}</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Amount</span>
+              <strong>{total.toLocaleString()} ETB</strong>
+            </div>
+          </div>
+
+          <form onSubmit={handleVerifyPayment}>
+            <label style={styles.label}>
+              Verification Code
+              <input
+                type="text"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                required
+                value={verificationCode}
+                onChange={(e) => {
+                  setVerificationCode(
+                    e.target.value.replace(/\D/g, "").slice(0, 6)
+                  );
+                  setError("");
+                }}
+                style={styles.codeInput}
+                placeholder="Enter 6-digit code"
+              />
+            </label>
+
+            {error && (
+              <p style={styles.error}>{error}</p>
+            )}
+
+            <button
+              type="submit"
+              style={styles.button}
+              disabled={verificationCode.length !== 6}
+            >
+              Confirm Payment
+            </button>
+          </form>
+
+          <button
+            type="button"
+            style={styles.backButton}
+            onClick={() => {
+              setStep("details");
+              setVerificationCode("");
+              setError("");
+            }}
+          >
+            ← Back to Checkout
+          </button>
+
+          <p style={styles.demoHint}>
+            Demo verification code: <strong>123456</strong>
+          </p>
+        </div>
       </main>
     );
   }
@@ -130,7 +270,7 @@ export default function CheckoutPage() {
       <h1 style={styles.title}>Complete Your Order</h1>
 
       <div style={styles.layout}>
-        <form onSubmit={handleSubmit} style={styles.card}>
+        <form onSubmit={handleContinue} style={styles.card}>
           <h2>Delivery Information</h2>
 
           <label style={styles.label}>
@@ -149,6 +289,7 @@ export default function CheckoutPage() {
             Phone Number
             <input
               name="phone"
+              type="tel"
               required
               value={form.phone}
               onChange={handleChange}
@@ -182,40 +323,69 @@ export default function CheckoutPage() {
           </label>
 
           <div style={styles.paymentSection}>
-            <h2>Payment Method</h2>
+            <h2>Choose Payment Method</h2>
 
-            <div style={styles.telebirrCard}>
-              <div style={styles.telebirrHeader}>
-                <div style={styles.telebirrLogo}>T</div>
-
-                <div>
+            <div style={styles.paymentOptions}>
+              <button
+                type="button"
+                style={{
+                  ...styles.paymentOption,
+                  ...(paymentMethod === "Telebirr"
+                    ? styles.paymentOptionSelected
+                    : {}),
+                }}
+                onClick={() => {
+                  setPaymentMethod("Telebirr");
+                  setError("");
+                }}
+              >
+                <div style={styles.paymentIcon}>T</div>
+                <div style={styles.paymentOptionText}>
                   <strong>Telebirr</strong>
-                  <p>Mobile Money Payment</p>
+                  <span>Mobile Money</span>
                 </div>
+                <span style={styles.radioCircle}>
+                  {paymentMethod === "Telebirr" ? "✓" : ""}
+                </span>
+              </button>
 
-                <span style={styles.selected}>Selected ✓</span>
-              </div>
-
-              <label style={styles.label}>
-                Telebirr Phone Number
-                <input
-                  name="telebirrPhone"
-                  required
-                  value={form.telebirrPhone}
-                  onChange={handleChange}
-                  style={styles.input}
-                  placeholder="09XXXXXXXX"
-                />
-              </label>
-
-              <p style={styles.demoNotice}>
-                Demo payment only. No real money will be transferred.
-              </p>
+              <button
+                type="button"
+                style={{
+                  ...styles.paymentOption,
+                  ...(paymentMethod === "Chapa"
+                    ? styles.paymentOptionSelected
+                    : {}),
+                }}
+                onClick={() => {
+                  setPaymentMethod("Chapa");
+                  setError("");
+                }}
+              >
+                <div
+                  style={{
+                    ...styles.paymentIcon,
+                    background: "#e9f0ff",
+                    color: "#2854a6",
+                  }}
+                >
+                  C
+                </div>
+                <div style={styles.paymentOptionText}>
+                  <strong>Chapa</strong>
+                  <span>Online Payment</span>
+                </div>
+                <span style={styles.radioCircle}>
+                  {paymentMethod === "Chapa" ? "✓" : ""}
+                </span>
+              </button>
             </div>
           </div>
 
+          {error && <p style={styles.error}>{error}</p>}
+
           <button type="submit" style={styles.button}>
-            Pay {total.toLocaleString()} ETB with Telebirr
+            Continue to Payment
           </button>
         </form>
 
@@ -244,8 +414,7 @@ export default function CheckoutPage() {
           </div>
 
           <p style={styles.note}>
-            Delivery fees are not included. This is a demo checkout;
-            no actual payment will be collected.
+            Delivery fees are not included.
           </p>
         </aside>
       </div>
@@ -310,50 +479,66 @@ const styles = {
 
   paymentSection: {
     marginTop: "30px",
-  },
-
-  telebirrCard: {
-    border: "1px solid #245c43",
-    borderRadius: "10px",
-    padding: "18px",
     marginBottom: "25px",
-    background: "#fbfaf6",
   },
 
-  telebirrHeader: {
+  paymentOptions: {
+    display: "grid",
+    gap: "12px",
+    marginTop: "18px",
+  },
+
+  paymentOption: {
     display: "flex",
     alignItems: "center",
-    gap: "12px",
-    marginBottom: "22px",
+    gap: "14px",
+    width: "100%",
+    padding: "16px",
+    border: "1px solid #ddd6c9",
+    borderRadius: "10px",
+    background: "#fff",
+    textAlign: "left",
+    cursor: "pointer",
+    boxSizing: "border-box",
   },
 
-  telebirrLogo: {
+  paymentOptionSelected: {
+    border: "2px solid #245c43",
+    background: "#f3f8f4",
+  },
+
+  paymentIcon: {
     width: "42px",
     height: "42px",
+    flexShrink: 0,
     borderRadius: "10px",
     background: "#245c43",
     color: "white",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: "24px",
+    fontSize: "22px",
     fontWeight: "bold",
   },
 
-  selected: {
-    marginLeft: "auto",
+  paymentOptionText: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    flex: 1,
+    color: "#183f2e",
+  },
+
+  radioCircle: {
+    width: "23px",
+    height: "23px",
+    border: "1px solid #245c43",
+    borderRadius: "50%",
     color: "#245c43",
-    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     fontWeight: "bold",
-  },
-
-  demoNotice: {
-    background: "#f0eadc",
-    padding: "12px",
-    borderRadius: "7px",
-    fontSize: "12px",
-    color: "#665b45",
-    lineHeight: "1.6",
   },
 
   button: {
@@ -377,6 +562,7 @@ const styles = {
     gap: "15px",
     padding: "15px 0",
     fontSize: "14px",
+    overflowWrap: "anywhere",
   },
 
   note: {
@@ -384,6 +570,84 @@ const styles = {
     fontSize: "13px",
     lineHeight: "1.7",
     marginTop: "20px",
+  },
+
+  verificationCard: {
+    maxWidth: "520px",
+    margin: "auto",
+    padding: "35px 25px",
+    background: "white",
+    border: "1px solid #e9e0d2",
+    borderRadius: "14px",
+    textAlign: "center",
+  },
+
+  verificationTitle: {
+    color: "#183f2e",
+    fontFamily: "Playfair Display, serif",
+    fontSize: "32px",
+  },
+
+  verificationText: {
+    color: "#72766f",
+    lineHeight: "1.7",
+  },
+
+  telebirrLogo: {
+    width: "55px",
+    height: "55px",
+    borderRadius: "13px",
+    background: "#245c43",
+    color: "white",
+    display: "grid",
+    placeItems: "center",
+    fontSize: "28px",
+    fontWeight: "bold",
+    margin: "0 auto 20px",
+  },
+
+  paymentDetails: {
+    background: "#fbfaf6",
+    padding: "10px 18px",
+    borderRadius: "10px",
+    margin: "25px 0",
+    textAlign: "left",
+  },
+
+  codeInput: {
+    width: "100%",
+    padding: "16px",
+    border: "1px solid #ddd6c9",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    fontSize: "24px",
+    textAlign: "center",
+    letterSpacing: "10px",
+  },
+
+  error: {
+    color: "#c0392b",
+    background: "#fff0ed",
+    padding: "12px",
+    borderRadius: "7px",
+    fontSize: "13px",
+    marginBottom: "15px",
+  },
+
+  backButton: {
+    marginTop: "18px",
+    padding: "10px",
+    background: "transparent",
+    border: "none",
+    color: "#245c43",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+
+  demoHint: {
+    marginTop: "20px",
+    color: "#777",
+    fontSize: "12px",
   },
 
   success: {
