@@ -2,13 +2,11 @@
 
 import Link from "next/link";
 import { useCart } from "../../lib/cart/CartProvider";
-import products from "../../data/products";
 
 export default function CartPage() {
   const {
     items,
     total,
-    addToCart,
     removeFromCart,
     updateQuantity,
     clearCart,
@@ -25,52 +23,40 @@ export default function CartPage() {
       ? "You qualify for free delivery!"
       : `Add ${(freeShippingThreshold - total).toLocaleString()} ETB for free delivery.`;
 
-  function loadDemoCart() {
-    clearCart();
-    products.slice(0, 3).forEach((product) => addToCart(product));
-  }
+  const itemCount = items.reduce(
+    (count, item) => count + item.quantity,
+    0
+  );
 
   return (
     <main className="cart-page" style={styles.page}>
       <div style={styles.header}>
         <div>
-          <p className="eyebrow">ARTISAN CHECKOUT</p>
-          <h1 style={styles.title}>Your Cart</h1>
+          <p className="eyebrow">YOUR SHOPPING BAG</p>
+          <h1 style={styles.title}>View Your Cart</h1>
           <p style={styles.subtitle}>
-            Bring a little Ethiopian craftsmanship home.
+            {itemCount === 0
+              ? "Your cart is waiting for something special."
+              : `${itemCount} ${itemCount === 1 ? "item" : "items"} in your cart.`}
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={loadDemoCart}
-          style={styles.demoButton}
-        >
-          Load Demo Cart
-        </button>
+        <Link href="/marketplace" style={styles.continueShoppingButton}>
+          Continue Shopping
+        </Link>
       </div>
 
       {items.length === 0 ? (
         <section style={styles.emptyCart}>
           <div style={{ fontSize: "55px" }}>🛍️</div>
-          <h2>Your cart is empty</h2>
+          <h2 style={styles.emptyTitle}>Your cart is empty</h2>
           <p style={styles.subtitle}>
             Discover beautiful handmade Ethiopian products.
           </p>
 
-          <div style={styles.emptyActions}>
-            <button
-              type="button"
-              onClick={loadDemoCart}
-              style={styles.demoButton}
-            >
-              Preview Demo Cart
-            </button>
-
-            <Link href="/marketplace" style={styles.checkoutButton}>
-              Explore Marketplace
-            </Link>
-          </div>
+          <Link href="/marketplace" style={styles.checkoutButton}>
+            Explore Marketplace
+          </Link>
         </section>
       ) : (
         <section style={styles.layout}>
@@ -95,6 +81,10 @@ export default function CartPage() {
                   <strong style={styles.price}>
                     {Number(item.price).toLocaleString()} ETB
                   </strong>
+                  <p style={styles.itemSubtotal}>
+                    Subtotal:{" "}
+                    {(Number(item.price) * item.quantity).toLocaleString()} ETB
+                  </p>
                 </div>
 
                 <div style={styles.quantityContainer}>
@@ -102,7 +92,10 @@ export default function CartPage() {
                     type="button"
                     onClick={() => updateQuantity(item.id, -1)}
                     disabled={item.quantity === 1}
-                    style={styles.quantityButton}
+                    style={{
+                      ...styles.quantityButton,
+                      ...(item.quantity === 1 ? styles.disabledButton : {}),
+                    }}
                     aria-label={`Decrease ${item.name} quantity`}
                   >
                     −
@@ -160,7 +153,7 @@ export default function CartPage() {
             <div style={styles.divider} />
 
             <div style={styles.summaryRow}>
-              <span>Subtotal</span>
+              <span>Items ({itemCount})</span>
               <strong>{total.toLocaleString()} ETB</strong>
             </div>
 
@@ -176,7 +169,7 @@ export default function CartPage() {
             <div style={styles.divider} />
 
             <div style={styles.totalRow}>
-              <strong>Total</strong>
+              <strong>Subtotal</strong>
               <strong>{total.toLocaleString()} ETB</strong>
             </div>
 
@@ -230,7 +223,7 @@ const styles = {
     lineHeight: "1.7",
   },
 
-  demoButton: {
+  continueShoppingButton: {
     padding: "12px 20px",
     border: "1px solid #245c43",
     borderRadius: "8px",
@@ -238,7 +231,7 @@ const styles = {
     color: "#245c43",
     fontWeight: "600",
     fontSize: "14px",
-    cursor: "pointer",
+    textDecoration: "none",
   },
 
   layout: {
@@ -308,6 +301,12 @@ const styles = {
     color: "#245c43",
   },
 
+  itemSubtotal: {
+    fontSize: "13px",
+    color: "#72766f",
+    margin: "8px 0 0",
+  },
+
   quantityContainer: {
     display: "flex",
     alignItems: "center",
@@ -324,6 +323,11 @@ const styles = {
     color: "#245c43",
     fontSize: "18px",
     cursor: "pointer",
+  },
+
+  disabledButton: {
+    opacity: 0.4,
+    cursor: "not-allowed",
   },
 
   quantityNumber: {
@@ -464,11 +468,9 @@ const styles = {
     borderRadius: "14px",
   },
 
-  emptyActions: {
-    display: "flex",
-    justifyContent: "center",
-    flexWrap: "wrap",
-    gap: "15px",
-    marginTop: "25px",
+  emptyTitle: {
+    fontFamily: "'Playfair Display', serif",
+    color: "#183f2e",
+    fontSize: "25px",
   },
 };
