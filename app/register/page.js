@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "../../lib/supabase/client";
+
 import {
   getAuthErrorMessage,
   getPasswordRequirements,
@@ -21,6 +22,9 @@ function RegisterContent() {
 
   const roleLabel = role === "creator" ? "Creator" : "Customer";
 
+  const destination =
+    role === "creator" ? "/dashboard" : "/customer";
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -29,11 +33,15 @@ function RegisterContent() {
   });
 
   const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("error");
+
   const [fieldErrors, setFieldErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [cooldown, setCooldown] = useState(0);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
+  // Countdown for rate-limited requests
   useEffect(() => {
     if (cooldown <= 0) return;
 
@@ -44,6 +52,7 @@ function RegisterContent() {
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
+  // Update form fields
   function updateField(field, value) {
     setForm((previous) => ({
       ...previous,
@@ -54,16 +63,21 @@ function RegisterContent() {
       ...previous,
       [field]: "",
     }));
+
+    setMessage("");
   }
 
+  // Handle registration
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (loading || cooldown > 0) return;
+    if (loading || cooldown > 0 || confirmationSent) return;
 
     setLoading(true);
     setMessage("");
+    setMessageType("error");
 
+    // Validate inputs
     const errors = validateRegistration(form);
     setFieldErrors(errors);
 
@@ -75,10 +89,20 @@ function RegisterContent() {
     try {
       const supabase = createClient();
 
+      // Redirect users to the correct dashboard
+      // after confirming their email
+      const emailRedirectTo =
+        `${window.location.origin}/auth/callback` +
+        `?next=${encodeURIComponent(destination)}`;
+
+      // Register user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email: form.email.trim().toLowerCase(),
         password: form.password,
+
         options: {
+          emailRedirectTo,
+
           data: {
             full_name: form.name.trim(),
             role,
@@ -86,19 +110,28 @@ function RegisterContent() {
         },
       });
 
-      if (error) throw error;
-
-      if (data.session) {
-        router.replace(
-          role === "creator" ? "/dashboard" : "/customer"
-        );
-        router.refresh();
-      } else {
-        throw new Error(
-          "Email confirmation is still enabled in Supabase. Disable it to enter immediately after registration."
-        );
+      if (error) {
+        throw error;
       }
+
+      // Email confirmation is disabled
+      if (data.session) {
+        router.replace(destination);
+        router.refresh();
+        return;
+      }
+
+      // Email confirmation is enabled
+      setConfirmationSent(true);
+      setMessageType("success");
+
+      setMessage(
+        "Account created! Please check your email and click the confirmation link to activate your account."
+      );
+
     } catch (error) {
+      console.error("Registration error:", error);
+
       if (
         error?.status === 429 ||
         error?.message?.toLowerCase().includes("rate limit") ||
@@ -106,6 +139,8 @@ function RegisterContent() {
       ) {
         setCooldown(60);
       }
+
+      setMessageType("error");
 
       setMessage(
         getAuthErrorMessage(
@@ -121,6 +156,7 @@ function RegisterContent() {
   return (
     <main className="auth-page">
       <section className="auth-split">
+
         {/* LEFT SIDE */}
         <div className="auth-visual">
           <Link href="/" className="auth-brand">
@@ -147,6 +183,7 @@ function RegisterContent() {
 
         {/* RIGHT SIDE */}
         <section className="auth-card">
+
           <p className="eyebrow">
             {roleLabel.toUpperCase()} REGISTRATION
           </p>
@@ -161,7 +198,11 @@ function RegisterContent() {
             Create your {role} account to get started.
           </p>
 
-          <form onSubmit={handleSubmit} className="auth-form">
+          <form
+            onSubmit={handleSubmit}
+            className="auth-form"
+          >
+
             {/* FULL NAME */}
             <label htmlFor="name">
               Full name
@@ -175,6 +216,7 @@ function RegisterContent() {
                 onChange={(event) =>
                   updateField("name", event.target.value)
                 }
+                disabled={confirmationSent}
                 required
               />
 
@@ -198,6 +240,7 @@ function RegisterContent() {
                 onChange={(event) =>
                   updateField("email", event.target.value)
                 }
+                disabled={confirmationSent}
                 required
               />
 
@@ -213,6 +256,7 @@ function RegisterContent() {
               Password
 
               <span className="password-input">
+
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -222,6 +266,7 @@ function RegisterContent() {
                   onChange={(event) =>
                     updateField("password", event.target.value)
                   }
+                  disabled={confirmationSent}
                   required
                 />
 
@@ -234,6 +279,7 @@ function RegisterContent() {
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
+
               </span>
 
               <span className="password-requirements">
@@ -277,6 +323,7 @@ function RegisterContent() {
                     event.target.value
                   )
                 }
+                disabled={confirmationSent}
                 required
               />
 
@@ -290,8 +337,10 @@ function RegisterContent() {
             {/* STATUS MESSAGE */}
             {message && (
               <p
+                role="status"
+                aria-live="polite"
                 className={
-                  message.startsWith("Account created")
+                  messageType === "success"
                     ? "form-message"
                     : "form-message form-error"
                 }
@@ -304,15 +353,30 @@ function RegisterContent() {
             <button
               type="submit"
               className="primary-button"
-              disabled={loading || cooldown > 0}
+              disabled={
+                loading ||
+                cooldown > 0 ||
+                confirmationSent
+              }
             >
               {loading
                 ? "Creating account..."
                 : cooldown > 0
                 ? `Try again in ${cooldown}s`
+                : confirmationSent
+                ? "Check Your Email"
                 : `Create ${roleLabel} Account`}
             </button>
+
           </form>
+
+          {/* EMAIL CONFIRMATION NOTICE */}
+          {confirmationSent && (
+            <p className="auth-footer">
+              Didn't receive the email? Check your spam
+              folder or contact support.
+            </p>
+          )}
 
           <p className="auth-footer">
             Already have an account?{" "}
@@ -329,6 +393,7 @@ function RegisterContent() {
               ← Back to welcome page
             </Link>
           </p>
+
         </section>
       </section>
     </main>
