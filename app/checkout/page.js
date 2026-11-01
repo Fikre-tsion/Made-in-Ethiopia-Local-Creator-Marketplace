@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -12,9 +13,11 @@ export default function CheckoutPage() {
     phone: "",
     address: "",
     city: "Addis Ababa",
+    telebirrPhone: "",
   });
 
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [transactionRef, setTransactionRef] = useState("");
 
   function handleChange(e) {
     setForm({
@@ -23,14 +26,28 @@ export default function CheckoutPage() {
     });
   }
 
+  function isValidEthiopianPhone(phone) {
+    return /^(?:\+251|251|0)9\d{8}$/.test(phone.trim());
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
 
-    if (!/^(?:\+251|0)9\d{8}$/.test(form.phone.trim())) {
-      alert("Please enter a valid Ethiopian phone number.");
+    if (!isValidEthiopianPhone(form.phone)) {
+      alert("Please enter a valid Ethiopian delivery phone number.");
       return;
     }
 
+    if (!isValidEthiopianPhone(form.telebirrPhone)) {
+      alert("Please enter a valid Telebirr phone number.");
+      return;
+    }
+
+    // Generate a demo transaction reference
+    const reference =
+      "MIE-TB-" + Math.random().toString(36).substring(2, 10).toUpperCase();
+
+    setTransactionRef(reference);
     setOrderPlaced(true);
     clearCart();
   }
@@ -39,14 +56,51 @@ export default function CheckoutPage() {
     return (
       <main style={styles.container}>
         <div style={styles.success}>
-          <h1>🎉 Order Submitted!</h1>
+          <div style={styles.successIcon}>✓</div>
+
+          <h1>Payment Successful!</h1>
 
           <p>
             Thank you for shopping with Made in Ethiopia.
           </p>
 
           <p>
-            Your order details have been recorded for this demo.
+            Your demo Telebirr payment has been completed successfully.
+          </p>
+
+          <div style={styles.receipt}>
+            <h3>Payment Receipt</h3>
+
+            <div style={styles.row}>
+              <span>Payment Method</span>
+              <strong>Telebirr</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Amount Paid</span>
+              <strong>{total.toLocaleString()} ETB</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Phone Number</span>
+              <strong>{form.telebirrPhone}</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Transaction Reference</span>
+              <strong>{transactionRef}</strong>
+            </div>
+
+            <div style={styles.row}>
+              <span>Status</span>
+              <strong style={{ color: "#245c43" }}>
+                Demo Successful
+              </strong>
+            </div>
+          </div>
+
+          <p style={styles.note}>
+            This was a simulated payment. No real money was transferred.
           </p>
 
           <Link href="/marketplace" style={styles.button}>
@@ -127,14 +181,41 @@ export default function CheckoutPage() {
             />
           </label>
 
-          <h3>Payment Method</h3>
+          <div style={styles.paymentSection}>
+            <h2>Payment Method</h2>
 
-          <p style={styles.payment}>
-            💵 Cash on Delivery (Demo)
-          </p>
+            <div style={styles.telebirrCard}>
+              <div style={styles.telebirrHeader}>
+                <div style={styles.telebirrLogo}>T</div>
+
+                <div>
+                  <strong>Telebirr</strong>
+                  <p>Mobile Money Payment</p>
+                </div>
+
+                <span style={styles.selected}>Selected ✓</span>
+              </div>
+
+              <label style={styles.label}>
+                Telebirr Phone Number
+                <input
+                  name="telebirrPhone"
+                  required
+                  value={form.telebirrPhone}
+                  onChange={handleChange}
+                  style={styles.input}
+                  placeholder="09XXXXXXXX"
+                />
+              </label>
+
+              <p style={styles.demoNotice}>
+                Demo payment only. No real money will be transferred.
+              </p>
+            </div>
+          </div>
 
           <button type="submit" style={styles.button}>
-            Place Order
+            Pay {total.toLocaleString()} ETB with Telebirr
           </button>
         </form>
 
@@ -164,7 +245,7 @@ export default function CheckoutPage() {
 
           <p style={styles.note}>
             Delivery fees are not included. This is a demo checkout;
-            no payment will be collected.
+            no actual payment will be collected.
           </p>
         </aside>
       </div>
@@ -227,15 +308,56 @@ const styles = {
     boxSizing: "border-box",
   },
 
-  payment: {
-    padding: "15px",
-    background: "#f0eadc",
-    borderRadius: "8px",
+  paymentSection: {
+    marginTop: "30px",
+  },
+
+  telebirrCard: {
+    border: "1px solid #245c43",
+    borderRadius: "10px",
+    padding: "18px",
     marginBottom: "25px",
+    background: "#fbfaf6",
+  },
+
+  telebirrHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    marginBottom: "22px",
+  },
+
+  telebirrLogo: {
+    width: "42px",
+    height: "42px",
+    borderRadius: "10px",
+    background: "#245c43",
+    color: "white",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "24px",
+    fontWeight: "bold",
+  },
+
+  selected: {
+    marginLeft: "auto",
+    color: "#245c43",
+    fontSize: "12px",
+    fontWeight: "bold",
+  },
+
+  demoNotice: {
+    background: "#f0eadc",
+    padding: "12px",
+    borderRadius: "7px",
+    fontSize: "12px",
+    color: "#665b45",
+    lineHeight: "1.6",
   },
 
   button: {
-    display: "inline-block",
+    display: "block",
     width: "100%",
     padding: "15px",
     background: "#245c43",
@@ -261,12 +383,35 @@ const styles = {
     color: "#72766f",
     fontSize: "13px",
     lineHeight: "1.7",
+    marginTop: "20px",
   },
 
   success: {
     textAlign: "center",
     background: "white",
-    padding: "60px 25px",
+    padding: "45px 25px",
     borderRadius: "14px",
+    border: "1px solid #e9e0d2",
+  },
+
+  successIcon: {
+    width: "65px",
+    height: "65px",
+    borderRadius: "50%",
+    background: "#e5f2e9",
+    color: "#245c43",
+    fontSize: "38px",
+    lineHeight: "65px",
+    margin: "0 auto 20px",
+  },
+
+  receipt: {
+    maxWidth: "500px",
+    margin: "30px auto",
+    padding: "20px",
+    background: "#fbfaf6",
+    border: "1px solid #e9e0d2",
+    borderRadius: "10px",
+    textAlign: "left",
   },
 };
