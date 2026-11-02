@@ -3,6 +3,8 @@
 
 import { useState, useEffect } from "react";
 import { useCart } from "../../lib/cart/CartProvider";
+import { createClient } from "../../lib/supabase/client";
+import { hasSupabaseConfig } from "../../lib/supabase/config";
 import Link from "next/link";
 
 const DEMO_CODE = "123456";
@@ -24,8 +26,9 @@ export default function CheckoutPage() {
   const [transactionRef, setTransactionRef] = useState("");
   const [orderTotal, setOrderTotal] = useState(0);
   const [orderDetails, setOrderDetails] = useState([]);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // Reset the checkout when a new cart is started after a successful order.
+  // Reset checkout when a new cart is started after a successful order.
   useEffect(() => {
     if (items.length > 0 && step === "success") {
       setStep("details");
@@ -72,23 +75,89 @@ export default function CheckoutPage() {
     setStep("verification");
   }
 
-  function handleVerifyPayment(e) {
+  async function handleVerifyPayment(e) {
     e.preventDefault();
+
+    if (isSaving) return;
 
     if (verificationCode !== DEMO_CODE) {
       setError("Incorrect verification code. Please try again.");
       return;
     }
 
-    const reference =
-      "MIE-" +
-      Math.random().toString(36).substring(2, 10).toUpperCase();
+    if (!hasSupabaseConfig()) {
+      setError(
+        "Supabase is not configured. Your order cannot be saved. Please try again when the database is available."
+      );
+      return;
+    }
 
-    setTransactionRef(reference);
-    setOrderTotal(total);
-    setOrderDetails([...items]);
-    setStep("success");
-    clearCart();
+    setIsSaving(true);
+    setError("");
+
+    try {
+      const supabase = createClient();
+
+      // Get the currently logged-in customer.
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error(
+          "Please log in to your customer account before placing an order."
+        );
+      }
+
+      const reference =
+        "MIE-" +
+        Math.random().toString(36).substring(2, 10).toUpperCase();
+
+      // Save a snapshot of the purchased items.
+      const purchasedItems = items.map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: Number(item.price),
+        quantity: Number(item.quantity),
+      }));
+
+      const orderData = {
+        customer_id: user.id,
+        order_reference: reference,
+        customer_name: form.name.trim(),
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+        city: form.city.trim(),
+        items: purchasedItems,
+        total: Number(total),
+        payment_method: paymentMethod,
+      };
+
+      // Save the order before clearing the cart.
+      const { error: orderError } = await supabase
+        .from("orders")
+        .insert(orderData);
+
+      if (orderError) {
+        throw new Error(orderError.message);
+      }
+
+      // Update the receipt and show success only after saving.
+      setTransactionRef(reference);
+      setOrderTotal(Number(total));
+      setOrderDetails(purchasedItems);
+      setStep("success");
+
+      clearCart();
+    } catch (err) {
+      console.error("Order saving error:", err);
+      setError(
+        err.message || "Something went wrong while saving your order."
+      );
+    } finally {
+      setIsSaving(false);
+    }
   }
 
   if (items.length === 0 && step !== "success") {
@@ -108,14 +177,13 @@ export default function CheckoutPage() {
         <div style={styles.success}>
           <div style={styles.successIcon}>✓</div>
 
-          <h1>Payment Confirmed!</h1>
+          <h1>Order Confirmed!</h1>
 
           <p>Thank you for shopping with Made in Ethiopia.</p>
-
-          <p>Your order has been successfully confirmed.</p>
+          <p>Your order has been successfully saved.</p>
 
           <div style={styles.receipt}>
-            <h3>Payment Receipt</h3>
+            <h3>Order Receipt</h3>
 
             {orderDetails.map((item) => (
               <div key={item.id} style={styles.row}>
@@ -123,9 +191,7 @@ export default function CheckoutPage() {
                   {item.name} × {item.quantity}
                 </span>
                 <strong>
-                  {(
-                    Number(item.price) * item.quantity
-                  ).toLocaleString()} ETB
+                  {(Number(item.price) * item.quantity).toLocaleString()} ETB
                 </strong>
               </div>
             ))}
@@ -154,9 +220,7 @@ export default function CheckoutPage() {
 
             <div style={styles.row}>
               <span>Status</span>
-              <strong style={{ color: "#245c43" }}>
-                Confirmed
-              </strong>
+              <strong style={{ color: "#245c43" }}>Confirmed</strong>
             </div>
           </div>
 
@@ -165,8 +229,15 @@ export default function CheckoutPage() {
             No real money was transferred.
           </p>
 
-          <Link href="/marketplace" style={styles.button}>
-            Continue Shopping
+          <Link href="/customer/orders" style={styles.button}>
+            View My Orders
+          </Link>
+
+          <Link
+            href="/marketplace"
+            style={{ ...styles.backButton, display: "block" }}
+          >
+            Continue Shopping →
           </Link>
         </div>
       </main>
@@ -183,13 +254,11 @@ export default function CheckoutPage() {
 
           <p style={styles.eyebrow}>PAYMENT VERIFICATION</p>
 
-          <h1 style={styles.verificationTitle}>
-            Verify Your Payment
-          </h1>
+          <h1 style={styles.verificationTitle}>Verify Your Payment</h1>
 
           <p style={styles.verificationText}>
-            Enter the six-digit verification code to confirm
-            your {paymentMethod} payment.
+            Enter the six-digit verification code to confirm your{" "}
+            {paymentMethod} payment.
           </p>
 
           <div style={styles.paymentDetails}>
@@ -230,22 +299,24 @@ export default function CheckoutPage() {
               />
             </label>
 
-            {error && (
-              <p style={styles.error}>{error}</p>
-            )}
+            {error && <p style={styles.error}>{error}</p>}
 
             <button
               type="submit"
-              style={styles.button}
-              disabled={verificationCode.length !== 6}
+              style={{
+                ...styles.button,
+                opacity: isSaving || verificationCode.length !== 6 ? 0.6 : 1,
+              }}
+              disabled={isSaving || verificationCode.length !== 6}
             >
-              Confirm Payment
+              {isSaving ? "Saving Your Order..." : "Confirm Payment"}
             </button>
           </form>
 
           <button
             type="button"
             style={styles.backButton}
+            disabled={isSaving}
             onClick={() => {
               setStep("details");
               setVerificationCode("");
@@ -399,9 +470,7 @@ export default function CheckoutPage() {
               </span>
 
               <strong>
-                {(
-                  Number(item.price) * item.quantity
-                ).toLocaleString()} ETB
+                {(Number(item.price) * item.quantity).toLocaleString()} ETB
               </strong>
             </div>
           ))}
@@ -413,9 +482,7 @@ export default function CheckoutPage() {
             <strong>{total.toLocaleString()} ETB</strong>
           </div>
 
-          <p style={styles.note}>
-            Delivery fees are not included.
-          </p>
+          <p style={styles.note}>Delivery fees are not included.</p>
         </aside>
       </div>
     </main>
@@ -632,6 +699,7 @@ const styles = {
     borderRadius: "7px",
     fontSize: "13px",
     marginBottom: "15px",
+    overflowWrap: "anywhere",
   },
 
   backButton: {
@@ -642,6 +710,7 @@ const styles = {
     color: "#245c43",
     fontWeight: "600",
     cursor: "pointer",
+    textDecoration: "none",
   },
 
   demoHint: {
